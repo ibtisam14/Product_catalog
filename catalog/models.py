@@ -60,12 +60,11 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     price = models.DecimalField(
         max_digits=10, decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.00'))]
+        validators=[MinValueValidator(Decimal('0.01'))]
     )
     rating = models.DecimalField(
         max_digits=3, decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.0')), MaxValueValidator(Decimal('5.0'))],
-        default=0
+        validators=[MinValueValidator(Decimal('0.0')), MaxValueValidator(Decimal('5.0'))],        default=0
     )
     in_stock = models.BooleanField(default=True, db_index=True)
     image_url = models.URLField(blank=True)
