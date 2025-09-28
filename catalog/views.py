@@ -4,15 +4,24 @@ from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from rest_framework.pagination import PageNumberPagination 
 
 from .models import Brand, Category, Product, CartItem
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CartItemSerializer
+
+
+# ADD THIS CUSTOM PAGINATION CLASS RIGHT HERE
+class CustomPagination(PageNumberPagination):
+    page_size = 10  # default
+    page_size_query_param = "page_size"
+    max_page_size = 48  # clamp at 48
+
 
 # --------- PRODUCTS ----------
 
 class ProductListView(APIView):
     permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated if needed
-
+    pagination_class = CustomPagination 
     @extend_schema(
         summary="List all products",
         description="Returns a list of products with filtering, searching, and ordering.",
@@ -63,12 +72,17 @@ class ProductListView(APIView):
         if ordering:
             queryset = queryset.order_by(ordering)
 
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = ProductSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
         serializer = ProductSerializer(queryset, many=True)
         return Response(
             {"count": len(serializer.data), "results": serializer.data},
             status=status.HTTP_200_OK,
         )
-
 
 class ProductDetailView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -96,6 +110,7 @@ class ProductDetailView(APIView):
 
 class BrandListView(APIView):
     permission_classes = [permissions.AllowAny]
+    pagination_class = CustomPagination 
 
     @extend_schema(
         summary="List all brands",
@@ -107,12 +122,15 @@ class BrandListView(APIView):
     )
     def get(self, request):
         queryset = Brand.objects.all()
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = BrandSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
         serializer = BrandSerializer(queryset, many=True)
         return Response(
-            {
-                "count": len(serializer.data),
-                "results": serializer.data
-            },
+            {"count": len(serializer.data), "results": serializer.data},
             status=status.HTTP_200_OK,
         )
 
@@ -120,6 +138,7 @@ class BrandListView(APIView):
 
 class CategoryListView(APIView):
     permission_classes = [permissions.AllowAny]
+    pagination_class = CustomPagination 
 
     @extend_schema(
         summary="List all categories",
@@ -131,12 +150,15 @@ class CategoryListView(APIView):
     )
     def get(self, request):
         queryset = Category.objects.all()
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = CategorySerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
         serializer = CategorySerializer(queryset, many=True)
         return Response(
-            {
-                "count": len(serializer.data),
-                "results": serializer.data
-            },
+            {"count": len(serializer.data), "results": serializer.data},
             status=status.HTTP_200_OK,
         )
 
