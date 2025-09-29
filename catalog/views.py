@@ -83,7 +83,19 @@ class ProductListView(APIView):
             {"count": len(serializer.data), "results": serializer.data},
             status=status.HTTP_200_OK,
         )
+    def post(self, request):
+        if not request.user.is_authenticated or not request.user.is_staff:
+            return Response(
+                {"detail": "Only admin users can add products."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
+        serializer = ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            product = serializer.save()  # slug auto-created in model.save()
+            return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class ProductDetailView(APIView):
     permission_classes = [permissions.AllowAny]
 
