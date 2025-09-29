@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'catalog',
     'drf_spectacular',
+    'django_seed',
+
 ]
 
 MIDDLEWARE = [
