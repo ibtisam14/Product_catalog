@@ -31,7 +31,8 @@ urlpatterns = [
     path("api/", include("catalog.urls")),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api-auth/", include("rest_framework.urls")), 
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),  
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),  # Swagger UI
-    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),  # ReDoc UI
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),  
+    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),  
 ]
