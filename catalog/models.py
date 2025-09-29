@@ -8,7 +8,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 def generate_unique_slug(instance, value):
     """Make a slug and ensure it's unique for the model by adding -1, -2... if needed."""
-    base_slug = slugify(value)[:200]  # keep some length safety
+    base_slug = slugify(value)[:200] 
     slug = base_slug
     Model = instance.__class__
     num = 1
@@ -101,7 +101,7 @@ class CartItem(models.Model):
 
     class Meta:
         ordering = ['-added_at']
-        # Ensure one row per (user, product) when user exists and per (session_id, product) for anonymous
+    
         constraints = [
             UniqueConstraint(fields=['user', 'product'], condition=Q(user__isnull=False), name='unique_user_product'),
             UniqueConstraint(fields=['session_id', 'product'], condition=Q(session_id__isnull=False), name='unique_session_product'),

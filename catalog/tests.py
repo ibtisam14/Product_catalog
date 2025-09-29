@@ -12,14 +12,14 @@ class ProductAPITestCase(APITestCase):
             username="admin", email="admin@example.com", password="adminpass"
         )
         self.client = APIClient()
-        self.client.force_authenticate(user=self.admin_user)  # ✅ works for IsAdminUser
+        self.client.force_authenticate(user=self.admin_user)  
 
         # Create brand & category
         self.brand = Brand.objects.create(name="TestBrand", slug="testbrand")
         self.category = Category.objects.create(name="TestCategory", slug="testcategory")
 
     def test_create_product(self):
-        url = reverse("product-list")  # make sure your urls.py has a router name "product-list"
+        url = reverse("product-list")  
         data = {
             "name": "Test Product",
             "slug": "test-product",

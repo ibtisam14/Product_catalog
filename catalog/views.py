@@ -12,15 +12,15 @@ from .serializers import BrandSerializer, CategorySerializer, ProductSerializer,
 
 # ADD THIS CUSTOM PAGINATION CLASS RIGHT HERE
 class CustomPagination(PageNumberPagination):
-    page_size = 10  # default
+    page_size = 10 
     page_size_query_param = "page_size"
-    max_page_size = 48  # clamp at 48
+    max_page_size = 48 
 
 
 # --------- PRODUCTS ----------
 
 class ProductListView(APIView):
-    permission_classes = [permissions.AllowAny]  # Change to IsAuthenticated if needed
+    permission_classes = [permissions.AllowAny]  
     pagination_class = CustomPagination 
     @extend_schema(
         summary="List all products",
@@ -92,7 +92,7 @@ class ProductListView(APIView):
 
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
-            product = serializer.save()  # slug auto-created in model.save()
+            product = serializer.save()  
             return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
