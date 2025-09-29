@@ -1,11 +1,8 @@
-from rest_framework import generics, viewsets, mixins, status, permissions
+from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from rest_framework.pagination import PageNumberPagination 
-
 from .models import Brand, Category, Product, CartItem
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CartItemSerializer
 
