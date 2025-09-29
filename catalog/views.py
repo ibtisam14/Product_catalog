@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from rest_framework.pagination import PageNumberPagination 
 from .models import Brand, Category, Product, CartItem
+from .Custom_response_helper import custom_response
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CartItemSerializer
 
 
@@ -87,10 +88,11 @@ class ProductListView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = ProductSerializer(queryset, many=True)
-        return Response(
-            {"count": len(serializer.data), "results": serializer.data},
-            status=status.HTTP_200_OK,
-        )
+        return custom_response(
+        status_code=status.HTTP_200_OK,
+        message="Products retrieved successfully",
+        data=serializer.data
+    )
     def post(self, request):
         if not request.user.is_authenticated or not request.user.is_staff:
             return Response({
@@ -164,11 +166,11 @@ class BrandListView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = BrandSerializer(queryset, many=True)
-        return Response(
-            {"count": len(serializer.data), "results": serializer.data},
-            status=status.HTTP_200_OK,
-        )
-
+        return custom_response(
+        status_code=status.HTTP_200_OK,
+        message="Brands retrieved successfully",
+        data=serializer.data
+    )
 
 
 class CategoryListView(APIView):
@@ -209,7 +211,11 @@ class CartView(APIView):
     def get(self, request):
         items = self.get_cart_queryset(request)
         serializer = CartItemSerializer(items, many=True)
-        return Response(serializer.data)
+        return custom_response(
+        status_code=status.HTTP_200_OK,
+        message="Cart items retrieved successfully",
+        data=serializer.data
+    )
 
     def post(self, request):
         serializer = CartItemSerializer(data=request.data)
