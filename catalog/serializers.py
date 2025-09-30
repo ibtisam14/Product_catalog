@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Brand, Category, Product, CartItem
+
+from .models import Brand, CartItem, Category, Product
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -16,8 +17,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     brand = BrandSerializer(read_only=True)
-    category = CategorySerializer(read_only=True) 
-    
+    category = CategorySerializer(read_only=True)
+
     brand_id = serializers.PrimaryKeyRelatedField(
         queryset=Brand.objects.all(), source="brand", write_only=True
     )
@@ -28,11 +29,20 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            "id", "name", "slug",
-            "brand", "category",        
-            "brand_id", "category_id",  
-            "description", "price", "rating",
-            "in_stock", "image_url", "created_at", "updated_at"
+            "id",
+            "name",
+            "slug",
+            "brand",
+            "category",
+            "brand_id",
+            "category_id",
+            "description",
+            "price",
+            "rating",
+            "in_stock",
+            "image_url",
+            "created_at",
+            "updated_at",
         ]
 
 
