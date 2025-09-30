@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiRespon
 from rest_framework.pagination import PageNumberPagination 
 from .models import Brand, Category, Product, CartItem
 from .Custom_response_helper import custom_response
+from . import service
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CartItemSerializer
 
 
@@ -26,7 +27,7 @@ class CustomPagination(PageNumberPagination):
             }
         })
 
-# --------- PRODUCTS ----------
+# PRODUCTS 
 
 class ProductListView(APIView):
     permission_classes = [permissions.AllowAny]  
@@ -48,39 +49,10 @@ class ProductListView(APIView):
             400: OpenApiResponse(description="Bad Request"),
         },
     )
+    
+    
     def get(self, request):
-        queryset = Product.objects.all().select_related("brand", "category")
-
-        # Filtering
-        brand = request.query_params.get("brand")
-        category = request.query_params.get("category")
-        in_stock = request.query_params.get("in_stock")
-        min_price = request.query_params.get("min_price")
-        max_price = request.query_params.get("max_price")
-
-        if brand:
-            queryset = queryset.filter(brand=brand)
-        if category:
-            queryset = queryset.filter(category=category)
-        if in_stock is not None:
-            queryset = queryset.filter(in_stock=in_stock.lower() in ["true", "1"])
-        if min_price:
-            queryset = queryset.filter(price__gte=min_price)
-        if max_price:
-            queryset = queryset.filter(price__lte=max_price)
-
-        # Searching
-        search = request.query_params.get("search")
-        if search:
-            queryset = queryset.filter(
-                name__icontains=search
-            ) | queryset.filter(description__icontains=search)
-
-        # Ordering
-        ordering = request.query_params.get("ordering")
-        if ordering:
-            queryset = queryset.order_by(ordering)
-
+        queryset = service.get_products(request.query_params) 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
@@ -88,32 +60,19 @@ class ProductListView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = ProductSerializer(queryset, many=True)
-        return custom_response(
-        status_code=status.HTTP_200_OK,
-        message="Products retrieved successfully",
-        data=serializer.data
-    )
+        return custom_response(200, "Products retrieved successfully", serializer.data)
+    
+    
+    
     def post(self, request):
         if not request.user.is_authenticated or not request.user.is_staff:
-            return Response({
-            "status_code": status.HTTP_403_FORBIDDEN,
-            "message": "Permission denied",
-            "errors": {"detail": "Only admin users can add products."}
-        })
+            return custom_response(403, "Permission denied", errors={"detail": "Only admin users can add products."})
 
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
-            product = serializer.save()  
-            return Response({
-                "status_code": status.HTTP_201_CREATED,
-                "message": "Product created successfully", 
-                "data": ProductSerializer(product).data
-            })
-        return Response({
-            "status_code": status.HTTP_400_BAD_REQUEST,
-            "message": "Validation error",
-            "errors": serializer.errors
-        })    
+            product = service.create_product(serializer.validated_data)  
+            return custom_response(201, "Product created successfully", ProductSerializer(product).data)
+        return custom_response(400, "Validation error", errors=serializer.errors)   
 class ProductDetailView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -128,22 +87,17 @@ class ProductDetailView(APIView):
             404: OpenApiResponse(description="Product not found"),
         },
     )
+    
+    
+    
     def get(self, request, slug):
         try:
-            product = Product.objects.select_related("brand", "category").get(slug=slug)
+            product = service.get_product_by_slug(slug) 
             serializer = ProductSerializer(product)
-            return Response({
-                "status_code": status.HTTP_200_OK,
-                "message": "Product retrieved successfully",
-                "data": serializer.data
-            })
-        except Product.DoesNotExist:
-            return Response({
-                "status_code": status.HTTP_404_NOT_FOUND,
-                "message": "Product not found",
-                "errors": {"detail": "No product found with this slug."}
-            })
-# --------- BRANDS / CATEGORIES ----------
+            return custom_response(200, "Product retrieved successfully", serializer.data)
+        except:
+            return custom_response(404, "Product not found", errors={"detail": "No product found with this slug."})
+# BRANDS/CATEGORIES 
 
 class BrandListView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -158,7 +112,7 @@ class BrandListView(APIView):
         },
     )
     def get(self, request):
-        queryset = Brand.objects.all()
+        queryset = service.get_brands()  
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
@@ -166,11 +120,7 @@ class BrandListView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = BrandSerializer(queryset, many=True)
-        return custom_response(
-        status_code=status.HTTP_200_OK,
-        message="Brands retrieved successfully",
-        data=serializer.data
-    )
+        return custom_response(200, "Brands retrieved successfully", serializer.data)
 
 
 class CategoryListView(APIView):
@@ -184,9 +134,13 @@ class CategoryListView(APIView):
             200: OpenApiResponse(response=CategorySerializer, description="List of categories"),
             400: OpenApiResponse(description="Bad Request"),
         },
-    )
+    ) 
+    
+    
+    
+
     def get(self, request):
-        queryset = Category.objects.all()
+        queryset = service.get_categories()  
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
@@ -194,10 +148,7 @@ class CategoryListView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = CategorySerializer(queryset, many=True)
-        return Response(
-            {"count": len(serializer.data), "results": serializer.data},
-            status=status.HTTP_200_OK,
-        )
+        return custom_response(200, "Categories retrieved successfully", serializer.data)
 
 # --------- CART ----------
 class CartView(APIView):
@@ -209,74 +160,37 @@ class CartView(APIView):
             return CartItem.objects.filter(session_id=request.session.session_key).select_related("product")
 
     def get(self, request):
-        items = self.get_cart_queryset(request)
+        items = service.get_cart_items(request) 
         serializer = CartItemSerializer(items, many=True)
-        return custom_response(
-        status_code=status.HTTP_200_OK,
-        message="Cart items retrieved successfully",
-        data=serializer.data
-    )
+        return custom_response(200, "Cart items retrieved successfully", serializer.data)
 
     def post(self, request):
         serializer = CartItemSerializer(data=request.data)
         if serializer.is_valid():
             product = serializer.validated_data["product"]
             quantity = serializer.validated_data["quantity"]
-
-            if request.user.is_authenticated:
-                cart_item, created = CartItem.objects.get_or_create(
-                    user=request.user, product=product, defaults={"quantity": quantity}
-                )
-            else:
-                if not request.session.session_key:
-                    request.session.create()
-                cart_item, created = CartItem.objects.get_or_create(
-                    session_id=request.session.session_key, product=product, defaults={"quantity": quantity}
-                )
-            if not created:
-                cart_item.quantity += quantity
-                cart_item.save()
-            return Response({
-            "status_code": status.HTTP_201_CREATED,
-            "message": "Item added to cart successfully",
-            "data": CartItemSerializer(cart_item).data
-        })
-        return Response({
-            "status_code": status.HTTP_201_CREATED,
-            "message": "Item added to cart successfully",
-            "data": CartItemSerializer(cart_item).data
-        })
-    def patch(self, request, pk=None):
+            cart_item = service.add_to_cart(request, product, quantity) 
+            return custom_response(201, "Item added to cart successfully", CartItemSerializer(cart_item).data)
+        return custom_response(400, "Validation error", errors=serializer.errors) 
+    
+    
+    def patch(self, request):
         try:
-            item = self.get_cart_queryset(request).get(pk=request.data.get("id"))
-        except CartItem.DoesNotExist:
-            return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        item.quantity = request.data.get("quantity", item.quantity)
-        item.save()
-        return Response(CartItemSerializer(item).data)
-
+            item = service.update_cart_item(request, request.data.get("id"), request.data.get("quantity"))
+            return custom_response(200, "Cart item updated", CartItemSerializer(item).data)
+        except:
+            return custom_response(404, "Item not found", errors={"detail": "Cart item not found"})
+    
+    
     def delete(self, request):
         try:
-            item = self.get_cart_queryset(request).get(pk=request.data.get("id"))
-            item.delete()
-            return Response({
-            "status_code": status.HTTP_200_OK,
-            "message": "Item removed from cart successfully"
-        })
-        except CartItem.DoesNotExist:
-            return Response({
-            "status_code": status.HTTP_404_NOT_FOUND,
-            "message": "Item not found",
-            "errors": {"detail": "Cart item not found"}
-        }) 
+            service.delete_cart_item(request, request.data.get("id"))  
+            return custom_response(200, "Item removed from cart successfully")
+        except:
+            return custom_response(404, "Item not found", errors={"detail": "Cart item not found"}) 
+
 
 class CartClearView(APIView):
     def post(self, request):
-        items = CartItem.objects.all()
-        if request.user.is_authenticated:
-            items = items.filter(user=request.user)
-        else:
-            items = items.filter(session_id=request.session.session_key)
-        items.delete()
+        service.clear_cart(request)  
         return Response({"message": "Cart cleared"}, status=status.HTTP_204_NO_CONTENT)
