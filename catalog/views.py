@@ -3,13 +3,13 @@ from rest_framework.response import Response # for returning responses
 from rest_framework.views import APIView # for creating API views
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse # for API documentation
 from rest_framework.pagination import PageNumberPagination  # for pagination
-from .models import Brand, Category, Product, CartItem # import models
+from .models import CartItem # import models
 from .Custom_response_helper import custom_response # import custom response helper
 from . import service # import service module
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CartItemSerializer # import serializers
 
 
-# ADD THIS CUSTOM PAGINATION CLASS RIGHT HERE
+# ADD THIS CUSTOM PAGINATION CLASS 
 class CustomPagination(PageNumberPagination): # custom pagination class
     page_size = 10  # default page size
     page_size_query_param = "page_size" # allow client to set page size
