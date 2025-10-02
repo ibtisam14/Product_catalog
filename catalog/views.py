@@ -1,3 +1,10 @@
+import json
+
+import stripe
+from django.conf import settings
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import OpenApiParameter  # for API documentation
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import (  # for permission classes and status codes
@@ -11,6 +18,7 @@ from rest_framework.views import APIView  # for creating API views
 from . import service  # import service module
 from .Custom_response_helper import custom_response  # import custom response helper
 from .models import CartItem  # import models
+from .models import Product
 from .serializers import BrandSerializer  # import serializers
 from .serializers import CartItemSerializer, CategorySerializer, ProductSerializer
 
@@ -314,3 +322,37 @@ class CartClearView(APIView):  # cart clear view for clearing all cart items
         return Response(
             {"message": "Cart cleared"}, status=status.HTTP_204_NO_CONTENT
         )  # return response if cart cleared
+
+
+@csrf_exempt
+def stripe_checkout_session(request, pk):
+    request_data = json.loads(request.body)  # parse valid json string to python dict
+    product = get_object_or_404(Product, pk=pk)
+
+    # get quantity from request, default to 1 if not provided
+    quantity = int(request_data.get("quantity", 1))
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    checkout_session = stripe.checkout.Session.create(
+        customer_email=request_data["email"],
+        payment_method_types=["card"],
+        line_items=[
+            {
+                "price_data": {
+                    "currency": "pkr",
+                    "product_data": {
+                        "name": product.name,
+                        "description": product.description,  # ✅ fixed
+                    },
+                    "unit_amount": int(product.price * 100),
+                },
+                "quantity": quantity,
+            }
+        ],
+        mode="payment",
+        customer_creation="always",
+        success_url=settings.PAYMENT_SUCCESS_URL,
+        cancel_url=settings.PAYMENT_CANCEL_URL,
+    )
+
+    return JsonResponse({"sessionId": checkout_session.id, "url": checkout_session.url})
