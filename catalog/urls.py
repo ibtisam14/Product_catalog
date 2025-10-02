@@ -11,6 +11,7 @@ from .views import (
     payment_cancel,
     payment_success,
     stripe_checkout_session,
+    stripe_webhook,
 )
 
 urlpatterns = [
@@ -26,6 +27,7 @@ urlpatterns = [
         stripe_checkout_session,
         name="create-checkout-session",
     ),
+    path("api/webhook/", stripe_webhook, name="stripe_webhook"),
     path("payment/success/", payment_success, name="payment_success"),
     path("payment/cancel/", payment_cancel, name="payment_cancel"),
 ]

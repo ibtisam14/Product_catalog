@@ -364,3 +364,37 @@ def payment_success(request):
 
 def payment_cancel(request):
     return render(request, "payment/cancel.html")
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        # Invalid payload
+        return JsonResponse({"error": "Invalid payload"}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return JsonResponse({"error": "Invalid signature"}, status=400)
+
+    # Handle event types
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        customer_email = session.get("customer_email")
+        amount_total = session.get("amount_total")
+
+        # Example: save order or mark as paid
+        print(f"✅ Payment successful for {customer_email}, Amount: {amount_total}")
+
+    elif event["type"] == "payment_intent.payment_failed":
+        intent = event["data"]["object"]
+        print(f"❌ Payment failed: {intent}")
+
+    # Return 200 to acknowledge receipt of event
+    return JsonResponse({"status": "success"}, status=200)
