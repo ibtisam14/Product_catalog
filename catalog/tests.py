@@ -8,14 +8,12 @@ from .models import Brand, Category
 
 class ProductAPITestCase(APITestCase):
     def setUp(self):
-        # Create admin user
         self.admin_user = User.objects.create_superuser(
             username="admin", email="admin@example.com", password="adminpass"
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.admin_user)
 
-        # Create brand & category
         self.brand = Brand.objects.create(name="TestBrand", slug="testbrand")
         self.category = Category.objects.create(
             name="TestCategory", slug="testcategory"

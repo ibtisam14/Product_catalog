@@ -57,7 +57,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    # ---- FIELD LEVEL VALIDATIONS ----
+    # FIELD LEVEL VALIDATIONS
     def validate_price(self, value):
         """Price must always be >= 0.01"""
         if value < 0.01:
@@ -70,7 +70,7 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Rating must be between 0 and 5.")
         return value
 
-    # ---- OBJECT LEVEL VALIDATIONS ----
+    # OBJECT LEVEL VALIDATIONS
     def validate(self, data):
         """
         Extra business rule checks.
@@ -93,14 +93,14 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ["id", "product", "product_id", "quantity", "added_at"]
 
-    # ---- FIELD LEVEL VALIDATIONS ----
+    # FIELD LEVEL VALIDATIONS
     def validate_quantity(self, value):
         """Quantity must always be >= 1"""
         if value < 1:
             raise serializers.ValidationError("Quantity must be at least 1.")
         return value
 
-    # ---- OBJECT LEVEL VALIDATIONS ----
+    # OBJECT LEVEL VALIDATIONS
     def validate(self, data):
         """Check product stock before adding to cart"""
         product = data.get("product")
