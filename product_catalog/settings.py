@@ -181,5 +181,5 @@ STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 # Payment redirect URLs
-PAYMENT_SUCCESS_URL = "http://127.0.0.1:8000/payment/success/"
-PAYMENT_CANCEL_URL = "http://127.0.0.1:8000/payment/cancel/"
+PAYMENT_SUCCESS_URL = "http://127.0.0.1:8000/api/payment/success/"
+PAYMENT_CANCEL_URL = "http://127.0.0.1:8000/api/payment/cancel/"

@@ -8,6 +8,8 @@ from .views import (
     CategoryListView,
     ProductDetailView,
     ProductListView,
+    payment_cancel,
+    payment_success,
     stripe_checkout_session,
 )
 
@@ -24,4 +26,6 @@ urlpatterns = [
         stripe_checkout_session,
         name="create-checkout-session",
     ),
+    path("payment/success/", payment_success, name="payment_success"),
+    path("payment/cancel/", payment_cancel, name="payment_cancel"),
 ]

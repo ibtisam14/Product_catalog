@@ -3,7 +3,7 @@ import json
 import stripe
 from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import OpenApiParameter  # for API documentation
 from drf_spectacular.utils import OpenApiResponse, extend_schema
@@ -356,3 +356,11 @@ def stripe_checkout_session(request, pk):
     )
 
     return JsonResponse({"sessionId": checkout_session.id, "url": checkout_session.url})
+
+
+def payment_success(request):
+    return render(request, "payment/success.html")
+
+
+def payment_cancel(request):
+    return render(request, "payment/cancel.html")
